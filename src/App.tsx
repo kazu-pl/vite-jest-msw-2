@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 
+import "./App.css";
 import axios from "axios";
 import { CharactersResponse } from "./types/api.types";
 
