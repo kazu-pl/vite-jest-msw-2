@@ -1,4 +1,81 @@
+This project was developed with:
+
+node: 18.18.1
+
+npm: 9.8.1
+
 I followed steps listed [here](https://dev.to/teyim/effortless-testing-setup-for-react-with-vite-typescript-jest-and-react-testing-library-1c48)
+
+---
+
+# Error `exports is not defined in ES module scope` or `Cannot find module`:
+
+`1` - Update your `package.json`:
+
+```json
+{
+  "type": "module",
+  "scripts": {
+    "start": "npx ts-node main.ts" // does not contain any --esm
+  }
+}
+```
+
+`2` - update your `tsconfig.json`:
+
+```json
+{
+  "ts-node": {
+    "esm": true, // its the same as --esm would do but it's better to have it like this
+    "experimentalSpecifierResolution": "node"
+  },
+  "compilerOptions": {
+    "esModuleInterop": true,
+    "moduleResolution": "node",
+    "module": "ESNext"
+  }
+}
+```
+
+To be precise `"module": "ESNext"` fixes `exports is not defined in ES module scope` issue and:
+
+```json
+{
+  "ts-node": {
+    "experimentalSpecifierResolution": "node"
+  }
+}
+```
+
+fixes `Cannot find module` issue but then another issue will show:
+
+```
+src/mocks/node.ts:2:29 - error TS2792: Cannot find module 'msw/node'. Did you mean to set the 'moduleResolution' option to '
+nodenext', or to add aliases to the 'paths' option?
+
+2 import { setupServer } from "msw/node";
+
+```
+
+which will be fixed by adding `"moduleResolution": "node",` to `compilerOptions` in `tsconfig.json`
+
+Found [here](https://stackoverflow.com/a/75396267)
+
+# Error `Unknown file extension ".ts"`
+
+To fix it, either add `--esm` flag to script like so:
+
+`"msw:esm": "npx ts-node --esm ./src/index.ts"`
+
+BUT IT'S BETTER TO add "ts-node" object with "esm" value to your `tsconfig.json` file:
+
+```json
+{
+  "ts-node": {
+    "esm": true
+  }
+}
+```
 
 # Error If you have issue `error TS17004: Cannot use JSX unless the '--jsx' flag is provided.`:
 
