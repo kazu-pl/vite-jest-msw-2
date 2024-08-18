@@ -4,6 +4,68 @@ node: 18.18.1
 
 npm: 9.8.1
 
+# - BELOW IS MSW INTEGRATED FOR BROWSER:
+
+I followed steps listed [here](https://mswjs.io/docs/integrations/browser)
+
+`1` - use command `npx msw init . --save` which will create file `mockServiceWorker.js`
+
+This command will also change `package.json` file:
+
+```json
+{
+  "msw": {
+    "workerDirectory": [""]
+  }
+}
+```
+
+`2` - create handler:
+
+```ts
+// src/mocks/browser.ts
+import { setupWorker } from "msw/browser";
+import { handlers } from "./handlers"; // same handlers for same endpoints as in msw/node
+
+export const worker = setupWorker(...handlers);
+```
+
+`3` - conditionally enable MSW:
+
+```ts
+// src/main.tsx
+
+async function enableMocking() {
+  if (process.env.NODE_ENV !== "development") {
+    return;
+  }
+
+  const { worker } = await import("./mocks/browser");
+
+  // `worker.start()` returns a Promise that resolves
+  // once the Service Worker is up and ready to intercept requests.
+  return worker.start();
+}
+
+enableMocking().then(() => {
+  ReactDOM.createRoot(document.getElementById("root")!).render(
+    <React.StrictMode>
+      <App />
+    </React.StrictMode>
+  );
+});
+```
+
+and then if you see:
+
+```
+[MSW] Mocking enabled.
+```
+
+in the browser when running app it means everything works correctly.
+
+# - BELOW IS MSW INTEGRATED WITH jest TESTS:
+
 I followed steps listed [here](https://dev.to/teyim/effortless-testing-setup-for-react-with-vite-typescript-jest-and-react-testing-library-1c48)
 
 ---
