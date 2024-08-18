@@ -64,9 +64,195 @@ and then if you see:
 
 in the browser when running app it means everything works correctly.
 
+---
+
 # - BELOW IS MSW INTEGRATED WITH jest TESTS:
 
 I followed steps listed [here](https://dev.to/teyim/effortless-testing-setup-for-react-with-vite-typescript-jest-and-react-testing-library-1c48)
+
+Those steps are:
+
+`1` - Setting up a Vite project
+`npm create vite@latest`
+
+`2` - Installing Jest and React testing library
+run command: `npm install -D jest @testing-library/react ts-jest @types/jest ts-node @testing-library/jest-dom jest-environment-jsdom @testing-library/user-event`
+
+`3` - Now create a `jest.setup.ts` file with the following code:
+
+```ts
+// src/jest.setup.ts / I put it in src dir, not in the root dir as it was in the guide
+
+import "@testing-library/jest-dom";
+```
+
+Also, create a `jest.config.js` file with the following configuration code:
+
+```js
+// jest.config.ts (I changed extension from *.js to *.ts)
+
+export default {
+  testEnvironment: "jsdom",
+  transform: {
+    "^.+\\.tsx?$": "ts-jest",
+  },
+  setupFilesAfterEnv: ["<rootDir>/src/jest.setup.ts"], // I changed path to "<rootDir>/src/jest.setup.ts" because I created that file in src dir
+};
+```
+
+`4` - Handling Styles and SVG's
+run command: `npm install -D identity-obj-proxy jest-transformer-svg`
+
+After successfully installing, modify your `jest.config.ts` file to look like so:
+
+```ts
+export default {
+  testEnvironment: "jsdom",
+  transform: {
+    "^.+\\.tsx?$": "ts-jest",
+  },
+
+  moduleNameMapper: {
+    "\\.(css|less|sass|scss)$": "identity-obj-proxy",
+    "^.+\\.svg$": "jest-transformer-svg",
+  },
+
+  setupFilesAfterEnv: ["<rootDir>/src/jest.setup.ts"], // I changed path to "<rootDir>/src/jest.setup.ts" because I created that file in src dir
+};
+```
+
+Our test passes..in some cases, this will fail because of the Typescript error.
+
+We fix this by including our `jest.setup.ts` file in our `tsconfig.json` file like so:
+
+```json
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "useDefineForClassFields": true,
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+
+    /* Linting */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true
+  },
+  "include": ["src", "./jest.setup.ts"],
+  "references": [{ "path": "./tsconfig.node.json" }]
+}
+```
+
+Specifically, we add `./jest.setup.ts` as an array value of the include property. Our Typescript error now disappears and our test runs smoothly.
+
+`5` - Handling absolute imports
+run command: `npm install -D vite-tsconfig-paths`
+After successful installation, we need to modify the `vite.config.ts` file and the `tsconfig.json` file. add the following code as part of the `compilerOptions` property:
+
+```json
+{
+  "compilerOptions": {
+    "baseUrl": "./src",
+    "paths": {
+      "@/*": ["./*"]
+    }
+  }
+}
+```
+
+Our `tsconfig.json` file looks like this:
+
+```json
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "useDefineForClassFields": true,
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+
+    /* Linting */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+
+    //absolute import
+    "baseUrl": "./src",
+    "paths": {
+      "@/*": ["./*"]
+    }
+  },
+  "include": ["src", "./jest.setup.ts"],
+  "references": [{ "path": "./tsconfig.node.json" }]
+}
+```
+
+We also modify our `vite.config.ts` file:
+
+```ts
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+import tsconfigPaths from "vite-tsconfig-paths";
+
+// https://vitejs.dev/config/
+export default defineConfig({
+  plugins: [react(), tsconfigPaths()],
+});
+```
+
+In your `jest.config.ts` file, add `"^@/(.*)$": "/src/$1"` to the `moduleNameMapper` property:
+
+```ts
+export default {
+  testEnvironment: "jsdom",
+  transform: {
+    "^.+\\.tsx?$": "ts-jest",
+  },
+
+  moduleNameMapper: {
+    "\\.(css|less|sass|scss)$": "identity-obj-proxy",
+    "^.+\\.svg$": "jest-transformer-svg",
+    "^@/(.*)$": "<rootDir>/src/$1", // added
+  },
+
+  setupFilesAfterEnv: ["<rootDir>/src/jest.setup.ts"], // I changed path to "<rootDir>/src/jest.setup.ts" because I created that file in src dir
+};
+```
+
+Amazing!! now you can import components like so:
+`import Counter from "@/components/counter-two/Counter-two";`
+using the @ path alias and use them in your test.
+
+`6` - Getting test coverage report
+
+Add the following command to your script in the `package.json` file:
+
+```json
+{
+  "coverage": "npm test --coverage --watchAll --collectCoverageFrom='src/components/**/*.{ts,tsx}'"
+}
+```
+
+We then run npm run coverage . This runs Jest in watch mode and provides the coverage report after every test run.
 
 ---
 

@@ -9,13 +9,15 @@ function App() {
   const [isFetching, setIsFetching] = useState(true);
   const [data, setData] = useState<CharactersResponse | null>(null);
 
+  const [count, setCount] = useState(1);
+
   useEffect(() => {
     const fetchDataFromApi = async () => {
       setError(false);
       setIsFetching(true);
       try {
         const response = await axios.get<CharactersResponse>(
-          `http://localhost:4000/characters?currentPage=${1}&pageSize=${5}&sortDirection=asc&sortBy=createdAt`
+          `http://localhost:4000/characters?count=${count}`
         );
 
         console.log({ useEffect_try_success: response.data });
@@ -32,7 +34,7 @@ function App() {
     };
 
     fetchDataFromApi();
-  }, []);
+  }, [count]);
 
   if (isFetching) {
     return <div>fetching</div>;
@@ -45,7 +47,12 @@ function App() {
     return <div>no data</div>;
   }
 
-  return <div data-testid="totalItems">{data?.totalItems}</div>;
+  return (
+    <div data-testid="totalItems">
+      {data?.totalItems}
+      <button onClick={() => setCount((prev) => prev + 1)}>increase</button>
+    </div>
+  );
 }
 
 export default App;

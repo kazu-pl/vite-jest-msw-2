@@ -12,10 +12,13 @@ export const handlers = [
       lastName: "Maverick",
     });
   }),
-  http.get("http://localhost:4000/characters", () => {
-    // ...and respond to them using this JSON response.
+
+  http.get("http://localhost:4000/characters", ({ request }) => {
+    const url = new URL(request.url);
+    const count = url.searchParams.get("count");
+
     return HttpResponse.json({
-      totalItems: 1,
+      totalItems: count || 1,
       data: [
         {
           __v: 0,
