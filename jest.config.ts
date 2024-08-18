@@ -10,5 +10,11 @@ export default {
     "^@/(.*)$": "<rootDir>/src/$1",
   },
 
-  setupFilesAfterEnv: ["<rootDir>/jest.setup.ts"],
+  // setupFilesAfterEnv: ["<rootDir>/src/setupTests.ts"],
+  setupFilesAfterEnv: ["<rootDir>/src/jest.setup.ts"],
+
+  testEnvironmentOptions: {
+    customExportConditions: [""],
+  },
+  setupFiles: ["./jest.polyfills.js"],
 };

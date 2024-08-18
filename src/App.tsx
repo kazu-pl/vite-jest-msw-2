@@ -19,6 +19,9 @@ function App() {
         );
 
         console.log({ useEffect_try_success: response.data });
+        console.log({
+          useEffect_try_success_array_of_items: response.data.data,
+        });
         setData(response.data);
       } catch (err) {
         console.log({ useEffect_catch_err: err });
