@@ -8,6 +8,124 @@ I followed steps listed [here](https://dev.to/teyim/effortless-testing-setup-for
 
 ---
 
+<!--
+key obstacles to overcome were:
+a) `ReferenceError: ReadableStream is not defined` oraz
+b) `exports is not defined in ES module scope` or `Cannot find module`
+c) Error `TS2339: Property 'toBeInTheDocument' does not exist on type 'JestMatchers<HTMLElement>'`
+d) error TS2705: An async function or method in ES5 requires the 'Promise' constructor.
+-->
+
+# Error `error TS2705: An async function or method in ES5 requires the 'Promise' constructor.`:
+
+If you have the following error:
+
+```
+error TS2705: An async function or method in ES5 requires the 'Promise' constructor.  Make sure you have a declaration for the 'Promise' const
+ructor or include 'ES2015' in your '--lib' option.
+
+7 async function app() {
+```
+
+then add `"lib": [ "es2015" ]` to your `tsconfig.json` in `compilerOptions`:
+
+```json
+// tsconfig.json
+{
+  "compilerOptions": {
+    "lib": ["es2018", "dom"]
+  }
+}
+```
+
+Found [here](https://stackoverflow.com/a/61908488)
+
+# Error `TS2339: Property 'toBeInTheDocument' does not exist on type 'JestMatchers<HTMLElement>'`
+
+If you have the following error:
+
+```
+$ jest
+ FAIL  src/__tests__/App.test.tsx
+  ● Test suite failed to run
+
+    src/__tests__/App.test.tsx:17:22 - error TS2339: Property 'toBeInTheDocument' does not exist on type 'JestMatchers<HTMLE
+lement>'.
+
+    17   expect(totalItems).toBeInTheDocument();
+                            ~~~~~~~~~~~~~~~~~
+
+```
+
+Then you will need to change the location of file `<rootDir>/jest.setup.ts` because in `tsconfig.app.json` there's a `"include": ["src"]` and for some reason if this is set then config file with `import "@testing-library/jest-dom";` needs to be there, in `src` directory (if you remove that `"include": ["src"]` then the file can be in root directory again but that `include` was set by default in the Vite template so we won't change it). Well, actually, if `"include": ["src"]` is set then it's all about putting `import "@testing-library/jest-dom";` in some file in `src` folder. It doesn't even have to be the config file, just any file.
+Putting that file in `src` folder will solve the problem for VSC linting and VSC won't tell anymore about not existing method on type JestMatchers.
+If we have to move `jest.setup.ts` file to `./src/` we can also change its name to `setupTests.ts` to keep Create-React-App like methodology but it's not needed. Then we have to link it in `jest.config.ts` like so:
+
+```ts
+export default {
+  setupFilesAfterEnv: ["<rootDir>/src/jest.setup.ts"], // or we can simply leave jest.config.ts file but in src dir instead of rootDir
+};
+```
+
+Then sometimes when running tests they might still thrown an error that some methods does not exist on type JestMatchers so to avoid that we have to add `"types": ["@testing-library/jest-dom"]` to `tsconfig.json` like this:
+
+```json
+{
+  "compilerOptions": {
+    "types": ["@testing-library/jest-dom"]
+  }
+}
+```
+
+Found [here](https://github.com/testing-library/jest-dom/issues/546#issuecomment-1792349644)
+
+# Error `ReferenceError: ReadableStream is not defined`:
+
+Follow steps from [here](https://github.com/mswjs/msw/discussions/1934#discussioncomment-7874204)
+
+but you will get another error like the following one:
+
+```
+ if (V instanceof ReadableStream) {
+        ^
+TypeError: Right-hand side of 'instanceof' is not an object
+
+```
+
+and to avoid it import `ReadableStream` from `node:stream/web` which will give:
+
+```js
+// jest.polyfills.js
+
+const { TextDecoder, TextEncoder } = require("node:util");
+const { ReadableStream } = require("node:stream/web");
+
+Object.defineProperties(globalThis, {
+  TextDecoder: { value: TextDecoder },
+  TextEncoder: { value: TextEncoder },
+  ReadableStream: { value: ReadableStream },
+});
+```
+
+# Error `TextEncoder is not defined`:
+
+follow steps from [here](https://mswjs.io/docs/faq/#requestresponsetextencoder-is-not-defined-jest)
+
+# Error `Cannot find module 'msw/node' from 'src/mocks/node.ts'`:
+
+Update your `jest.config.json` file to:
+
+```json
+// jest.config.json
+{
+  "testEnvironmentOptions": {
+    "customExportConditions": [""]
+  }
+}
+```
+
+Found [here](https://stackoverflow.com/a/77415620)
+
 # Error `exports is not defined in ES module scope` or `Cannot find module`:
 
 `1` - Update your `package.json`:

@@ -17,7 +17,9 @@
       "@/*": ["./*"]
     },
     "moduleResolution": "node",
-    "module": "ESNext"
+    "module": "ESNext",
+    "types": ["@testing-library/jest-dom"],
+    "lib": ["es2018", "dom"]
   },
   "ts-node": {
     "esm": true,
